@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Search</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search images...">
+                <button id="searchButton" class="btn btn-primary mt-3">Search</button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col text-center">
+                <div id="loadingSpinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+        <div class="col text-center">
+            <div id="textOutput" class="mt-3">
+                <!-- Text output will be displayed here -->
+            </div>
+        </div>
+        </div>
+        <div class="row mt-3" id="imageGrid">
+            <!-- Images will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchButton').addEventListener('click', function() {
+            var query = document.getElementById('searchInput').value;
+            fetchImages(query);
+        });
+
+        function fetchImages(query) {
+            const spinner = document.getElementById('loadingSpinner');
+            spinner.style.display = 'block'; // Show the spinner
+            const textOutput = document.getElementById('textOutput'); // Get the text output element
+            fetch('http://localhost:5000/get_data?query=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    const images = data.images;
+                    const text = data.text;
+                    const formattedHTML = formatProductsToHTML(text);
+                    textOutput.innerHTML = formattedHTML;
+                    spinner.style.display = 'none'; // Hide the spinner
+                    const grid = document.getElementById('imageGrid');
+                    grid.innerHTML = ''; // Clear existing images
+                    images.forEach(image => {
+                        const colDiv = document.createElement('div');
+                        colDiv.className = 'col-sm-6 col-md-4 col-lg-3 mb-3';
+                        const img = document.createElement('img');
+                        img.src = "data/Apparel/Boys/Images/images_with_product_ids/"+image;
+                        img.alt = 'Image';
+                        img.className = 'img-fluid';
+                        colDiv.appendChild(img);
+                        grid.appendChild(colDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    spinner.style.display = 'none'; // Hide the spinner
+                });
+        }
+        function formatProductsToHTML(responseString) {
+            const products = responseString.split(/\d\. \*\*/).filter(Boolean);
+            let htmlContent = '<ol>';
+            products.forEach(product => {
+                htmlContent += `<li><ul>${product}`;
+                htmlContent += '</ul></li>';
+            });
+            htmlContent += '</ol>';
+            return htmlContent;
+        }
+    </script>
+</body>
+</html>
